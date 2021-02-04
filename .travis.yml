@@ -1,0 +1,21 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t abanin/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true abanin/react-test npm test -- --coverage
+
+after-success:
+  - docker build -t abanin/multi-client ./client
+  - docker build -t abanin/multi-nginx ./nginx
+  - docker build -t abanin/multi-server ./server
+  - docker build -t abanin/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push abanin/multi-client
+  - docker push abanin/multi-nginx
+  - docker push abanin/multi-server
+  - docker push abanin/multi-worker
